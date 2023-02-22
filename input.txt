@@ -1,0 +1,3 @@
+Hello!
+ This is testing text for unique word counting.
+ I hope this is a good test case.
