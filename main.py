@@ -158,9 +158,43 @@ def generate_passwords(word_count=6):
     return " ".join(passwords)
 
 
+def merge_csv(input_filepaths: list, output_filepath):
+    """
+    Merge comma separated values (CSV)
+    1. read each input file
+    2. each input file, read the row and get field to val dict for each row
+        translate data row to data dict
+    3. store all data dict for all input files
+    4. collect all the headers' fields that encounter in the input files
+    5. loop through all the fields and the data dict and reconstruct a csv in one file
+    """
+    data_list = []
+    out_header = []
+    for filepath in input_filepaths:
+        # process one file at the time
+        with open(filepath, "r", encoding="utf-8") as file:
+            lines = file.readlines()
+            header = lines[0].strip("\n").split(",")
+            print(header)
+            for line in lines[1:]:
+                values = line.strip("\n").split(",")
+                field_to_val_dict = {header[i]: values[i] for i in range(min(len(header), len(values)))}
+                data_list.append(field_to_val_dict)
+            out_header.extend(field for field in header if field not in out_header)
+
+    with open(output_filepath, "w", encoding="utf-8") as file:
+        first_line = ",".join(out_header) + "\n"
+        lines = [first_line]
+        for row_data_dict in data_list:
+            row_data = ",".join([row_data_dict.get(field, "") for field in out_header]) + "\n"
+            lines.append(row_data)
+        file.writelines(lines)
+
+
 if __name__ == "__main__":
+    merge_csv(["csv1.csv", "csv2.csv"], "merged_csv.csv")
     # process_diceware_wordlist()
-    print(f"Password:\n{generate_passwords()}")
+    # print(f"Password:\n{generate_passwords()}")
     # filepath = "shakespeare.txt"
     # count_unique_words(filepath)
     # simulate_dice(4, 6, 6)
