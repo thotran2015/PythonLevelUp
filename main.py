@@ -191,8 +191,56 @@ def merge_csv(input_filepaths: list, output_filepath):
         file.writelines(lines)
 
 
+def solve_sudoku(puzzle, cur=0, nrow=9, ncol=9):
+    if cur >= nrow * ncol:
+        return True
+    r, c = divmod(cur, ncol)
+    row_vals = puzzle[r]
+    col_vals = [puzzle[r][c] for r in range(nrow)]
+    sqr_offset_r, sqr_offset_c = r-(r % 3), c-(c % 3)
+    sqr_vals = [puzzle[i][j] for i in range(sqr_offset_r, sqr_offset_r + 3)
+                for j in range(sqr_offset_c, sqr_offset_c+3)]
+
+    if puzzle[r][c] == 0:
+        for i in range(1, 10):
+            # i not i this row, col or 3x3 area
+            if i not in row_vals and i not in col_vals and i not in sqr_vals:
+                puzzle[r][c] = i
+                is_solved = solve_sudoku(puzzle, cur+1)
+                if is_solved:
+                    return True
+                else:
+                    puzzle[r][c] = 0
+        else:
+            return False
+    else:
+        return solve_sudoku(puzzle, cur+1)
+
+
 if __name__ == "__main__":
-    merge_csv(["csv1.csv", "csv2.csv"], "merged_csv.csv")
+    pussle = [[5, 3, 0, 0, 7, 0, 0, 0, 0],
+              [6, 0, 0, 1, 9, 5, 0, 0, 0],
+              [0, 9, 8, 0, 0, 0, 0, 6, 0],
+              [8, 0, 0, 0, 6, 0, 0, 0, 3],
+              [4, 0, 0, 8, 0, 3, 0, 0, 1],
+              [7, 0, 0, 0, 2, 0, 0, 0, 6],
+              [0, 6, 0, 0, 0, 0, 2, 8, 0],
+              [0, 0, 0, 4, 1, 9, 0, 0, 5],
+              [0, 0, 0, 0, 8, 0, 0, 7, 9]]
+    expected = [[5, 3, 4, 6, 7, 8, 9, 1, 2],
+             [6, 7, 2, 1, 9, 5, 3, 4, 8],
+             [1, 9, 8, 3, 4, 2, 5, 6, 7],
+             [8, 5, 9, 7, 6, 1, 4, 2, 3],
+             [4, 2, 6, 8, 5, 3, 7, 9, 1],
+             [7, 1, 3, 9, 2, 4, 8, 5, 6],
+             [9, 6, 1, 5, 3, 7, 2, 8, 4],
+             [2, 8, 7, 4, 1, 9, 6, 3, 5],
+             [3, 4, 5, 2, 8, 6, 1, 7, 9]]
+    solve_sudoku(pussle)
+    print("Result is expected? ", pussle == expected)
+    print("\n".join([str(r) for r in pussle]))
+
+    # merge_csv(["csv1.csv", "csv2.csv"], "merged_csv.csv")
     # process_diceware_wordlist()
     # print(f"Password:\n{generate_passwords()}")
     # filepath = "shakespeare.txt"
