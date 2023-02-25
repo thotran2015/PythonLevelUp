@@ -1,3 +1,4 @@
+import os.path
 import pickle
 import random
 import re
@@ -5,6 +6,7 @@ import secrets
 import smtplib
 import ssl
 import time
+import zipfile
 from collections import Counter
 
 
@@ -217,28 +219,56 @@ def solve_sudoku(puzzle, cur=0, nrow=9, ncol=9):
         return solve_sudoku(puzzle, cur+1)
 
 
+def zip_archive(dirpath, filetypes, zip_filename):
+    desired_filepaths = []
+
+    def get_filepaths(dir_path):
+        for item in os.listdir(dir_path):
+            item_path = os.path.join(dir_path, item)
+            if os.path.isfile(item_path):
+                _, ext = os.path.splitext(item)
+                if ext.lower() in filetypes:
+                    desired_filepaths.append(item_path)
+
+            if os.path.isdir(item_path):
+                get_filepaths(item_path)
+
+    get_filepaths(dirpath)
+    print(f"file paths to zip {desired_filepaths}")
+
+    zip_filepath = os.path.join(os.path.dirname(dirpath), zip_filename)
+    with zipfile.ZipFile(zip_filepath, mode='w') as myzip:
+        for path in desired_filepaths:
+            relpath = os.path.relpath(path, dirpath)
+            print(f"path and rel path {path} and {relpath}")
+            myzip.write(path, arcname=relpath)
+
+
 if __name__ == "__main__":
-    pussle = [[5, 3, 0, 0, 7, 0, 0, 0, 0],
-              [6, 0, 0, 1, 9, 5, 0, 0, 0],
-              [0, 9, 8, 0, 0, 0, 0, 6, 0],
-              [8, 0, 0, 0, 6, 0, 0, 0, 3],
-              [4, 0, 0, 8, 0, 3, 0, 0, 1],
-              [7, 0, 0, 0, 2, 0, 0, 0, 6],
-              [0, 6, 0, 0, 0, 0, 2, 8, 0],
-              [0, 0, 0, 4, 1, 9, 0, 0, 5],
-              [0, 0, 0, 0, 8, 0, 0, 7, 9]]
-    expected = [[5, 3, 4, 6, 7, 8, 9, 1, 2],
-             [6, 7, 2, 1, 9, 5, 3, 4, 8],
-             [1, 9, 8, 3, 4, 2, 5, 6, 7],
-             [8, 5, 9, 7, 6, 1, 4, 2, 3],
-             [4, 2, 6, 8, 5, 3, 7, 9, 1],
-             [7, 1, 3, 9, 2, 4, 8, 5, 6],
-             [9, 6, 1, 5, 3, 7, 2, 8, 4],
-             [2, 8, 7, 4, 1, 9, 6, 3, 5],
-             [3, 4, 5, 2, 8, 6, 1, 7, 9]]
-    solve_sudoku(pussle)
-    print("Result is expected? ", pussle == expected)
-    print("\n".join([str(r) for r in pussle]))
+    dir_to_zip = "../PythonLevelUp"
+    zip_archive(dir_to_zip, [".csv", ".pickle", ".txt"], "PythonLevelUp.zip")
+
+    # pussle = [[5, 3, 0, 0, 7, 0, 0, 0, 0],
+    #           [6, 0, 0, 1, 9, 5, 0, 0, 0],
+    #           [0, 9, 8, 0, 0, 0, 0, 6, 0],
+    #           [8, 0, 0, 0, 6, 0, 0, 0, 3],
+    #           [4, 0, 0, 8, 0, 3, 0, 0, 1],
+    #           [7, 0, 0, 0, 2, 0, 0, 0, 6],
+    #           [0, 6, 0, 0, 0, 0, 2, 8, 0],
+    #           [0, 0, 0, 4, 1, 9, 0, 0, 5],
+    #           [0, 0, 0, 0, 8, 0, 0, 7, 9]]
+    # expected = [[5, 3, 4, 6, 7, 8, 9, 1, 2],
+    #          [6, 7, 2, 1, 9, 5, 3, 4, 8],
+    #          [1, 9, 8, 3, 4, 2, 5, 6, 7],
+    #          [8, 5, 9, 7, 6, 1, 4, 2, 3],
+    #          [4, 2, 6, 8, 5, 3, 7, 9, 1],
+    #          [7, 1, 3, 9, 2, 4, 8, 5, 6],
+    #          [9, 6, 1, 5, 3, 7, 2, 8, 4],
+    #          [2, 8, 7, 4, 1, 9, 6, 3, 5],
+    #          [3, 4, 5, 2, 8, 6, 1, 7, 9]]
+    # solve_sudoku(pussle)
+    # print("Result is expected? ", pussle == expected)
+    # print("\n".join([str(r) for r in pussle]))
 
     # merge_csv(["csv1.csv", "csv2.csv"], "merged_csv.csv")
     # process_diceware_wordlist()
