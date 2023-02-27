@@ -6,8 +6,10 @@ import secrets
 import smtplib
 import ssl
 import time
+import urllib.parse
 import zipfile
 from collections import Counter
+import requests
 
 
 def is_palindrome(string):
@@ -244,9 +246,81 @@ def zip_archive(dirpath, filetypes, zip_filename):
             myzip.write(path, arcname=relpath)
 
 
+def is_downloadable(file_url):
+    with requests.get(file_url, allow_redirects=True) as r:
+        content_len = int(r.headers.get("content-length", 0))
+        return content_len > 0
+
+
+def create_dir(dirpath):
+    if not os.path.isdir(dirpath):
+        os.mkdir(dirpath)
+
+
+def download(file_url, out_dir):
+    if is_downloadable(file_url):
+        create_dir(out_dir)
+        out_filepath = os.path.join(out_dir, os.path.basename(file_url))
+        if os.path.isfile(out_filepath):
+            filepath, ext = os.path.splitext(out_filepath)
+            out_filepath = filepath + str(time.time()) + ext
+
+        with requests.get(file_url, allow_redirects=True) as r:
+            with open(out_filepath, "wb") as file:
+                file.write(r.content)
+                print(f"Successfully downloaded {file_url} to {out_filepath}")
+                return True
+    else:
+        print(f"Unable to download: {file_url}")
+        return False
+
+
+def download_sequential_files(url, output_dir):
+    url_parser = urllib.parse.urlparse(url)
+    filepath = str(url_parser.path)
+
+    create_dir(output_dir)
+    # Download the first file given
+    is_downloaded = download(url, output_dir)
+    if not is_downloaded:
+        return
+
+    filepath_parts = filepath.split("/")
+    print(f"Filepath: {filepath}\nFilepath parts: {filepath_parts}")
+    is_sequence_downloaded = False
+    for i in range(len(filepath_parts)-1, -1, -1):
+        part = filepath_parts[i]
+
+        if not part:  # path part is empty or None
+            continue
+        if is_sequence_downloaded:  # a sequence of files is downloaded
+            break
+
+        # any number in each part in the filepath can be part of the sequence
+        for n in re.finditer(r"[0-9]+", part):
+            s, e = n.span()
+            num = int(part[s:e])
+            while is_downloaded:
+                next_num = str(num + 1).zfill(e-s)
+                new_part = part[:s] + next_num + part[e:]
+                new_path = "/".join(filepath_parts[:i] + [new_part] + filepath_parts[i+1:])
+                print(f"New filepath: {new_path}")
+                new_url = urllib.parse.urljoin(url, new_path)
+                print(f"New url to download: {new_url}")
+                is_downloaded = download(new_url, output_dir)
+                if is_downloaded:
+                    num += 1
+            else:
+                is_sequence_downloaded = True
+                break
+
+
 if __name__ == "__main__":
-    dir_to_zip = "../PythonLevelUp"
-    zip_archive(dir_to_zip, [".csv", ".pickle", ".txt"], "PythonLevelUp.zip")
+    test_url = 'https://699340.youcanlearnit.net/image001.jpg'
+    download_sequential_files(test_url, "./images")
+
+    # dir_to_zip = "../PythonLevelUp"
+    # zip_archive(dir_to_zip, [".csv", ".pickle", ".txt"], "PythonLevelUp.zip")
 
     # pussle = [[5, 3, 0, 0, 7, 0, 0, 0, 0],
     #           [6, 0, 0, 1, 9, 5, 0, 0, 0],
