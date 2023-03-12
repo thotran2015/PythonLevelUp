@@ -8,8 +8,9 @@ import ssl
 import time
 import urllib.parse
 import zipfile
-from collections import Counter
+from collections import Counter, defaultdict
 import requests
+
 
 
 def is_palindrome(string):
@@ -246,6 +247,7 @@ def zip_archive(dirpath, filetypes, zip_filename):
             myzip.write(path, arcname=relpath)
 
 
+<<<<<<< HEAD
 def is_downloadable(file_url):
     with requests.get(file_url, allow_redirects=True) as r:
         content_len = int(r.headers.get("content-length", 0))
@@ -314,11 +316,29 @@ def download_sequential_files(url, output_dir):
                 is_sequence_downloaded = True
                 break
 
+def search_number_set(nums, target_set):
+    seen = dict()
+    target_counter = Counter(target_set)
+    target_n = len(target_set)
+    for i, n in enumerate(nums):
+        seen[n] = seen.get(n, 0) + 1
+        if i >= target_n-1:
+            if i > target_n-1:
+                seen[nums[i-target_n]] -= 1
+                if seen[nums[i-target_n]] <= 0:
+                    seen.pop(nums[i-target_n])
+            if target_counter == seen:
+                return True
+
+    return False
+
 
 if __name__ == "__main__":
-    test_url = 'https://699340.youcanlearnit.net/image001.jpg'
-    download_sequential_files(test_url, "./images")
+    res = search_number_set([5, 3, 0, 0, 7, 0, 0, 0, 0], {0, 0, 7})
+    print(res)
 
+    # test_url = 'https://699340.youcanlearnit.net/image001.jpg'
+    # download_sequential_files(test_url, "./images")
     # dir_to_zip = "../PythonLevelUp"
     # zip_archive(dir_to_zip, [".csv", ".pickle", ".txt"], "PythonLevelUp.zip")
 
